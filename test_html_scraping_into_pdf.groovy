@@ -1,11 +1,23 @@
 #!/usr/bin/env groovy
 
 @Grab('org.apache.pdfbox:pdfbox:2.0.15')
-import org.apache.pdfbox.io.MemoryUsageSetting;
-import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import java.io.File;
-import java.io.IOException;
+
+import java.io.File
+import java.io.IOException
+
+import org.apache.pdfbox.io.MemoryUsageSetting
+
+import org.apache.pdfbox.pdmodel.PDPage
+import org.apache.pdfbox.pdmodel.PDDocument
+//import org.apache.pdfbox.pdmodel.PDDocumentInformation
+import org.apache.pdfbox.pdmodel.PageMode
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitWidthDestination
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocumentOutline
+import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem
+
+import org.apache.pdfbox.multipdf.PageExtractor
+import org.apache.pdfbox.multipdf.PDFMergerUtility
 
 if (this.args.length < 1) {
     println '''
@@ -39,33 +51,122 @@ doc_to_append.forEach {
 
 // TODO: cleanup
 def final out_pdf = "test_pdf_merge-${System.currentTimeMillis()}.pdf"
-println "OUTPUT: ${out_pdf}"
 
 try {
 
-    def final pdfMergerUtility = new PDFMergerUtility()
-    pdfMergerUtility.setDestinationFileName(out_pdf); //TODO
+    def final pdfs = doc_to_append.collect {
+        def final pdf_doc_name = it
+        //def final info = new PDDocumentInformation()
+        //info.setTitle(pdf_doc_name) //TODO: extract the actual basename wihout the file extension (.pdf)
 
-    def final pdfDocumentInformation = new PDDocumentInformation();
-    pdfDocumentInformation.setTitle("merge docs to PDF test title");
-    pdfDocumentInformation.setCreator("martin.bohun@gmail.com");
-    pdfDocumentInformation.setSubject("merge docs to PDF test subject");
+        //PDDocument.metaClass.toString = { ->
+        //    pdf_doc_name
+        //}
 
-    // TODO: create new index/header but with the index.html a href-s converted to PDF hotlinks/bookmarks
-    //
-    //pdfMergerUtility.addSource();
+        def final pdf_doc = PDDocument.load(new File(pdf_doc_name))
+        //pdf_doc.setDocumentInformation(info)
+        pdf_doc
+    }
+    println "PDFs loaded: ${pdfs}"
 
-    doc_to_append.forEach {
-        def final doc_file = it
-        println "appending: ${doc_file}"
+    def final pdfs_number_pages = pdfs.collect {
+        it.getNumberOfPages()
+    }
+    println "PDFs number of pages: ${pdfs_number_pages}; total: ${pdfs_number_pages.sum()}"
 
-        // TODO: 1. handle diff file type-s here, i.e. convert everything to PDF
-        //       2. add bookmark
-        pdfMergerUtility.addSource(new File(doc_file));
+    def start_page = 0 as Integer
+    def final startPageDocName = [:]
+    doc_to_append.eachWithIndex { it, i ->
+        startPageDocName[start_page] = it // TODO: CLEANUP: make a list of page offsets
+        start_page += pdfs_number_pages[i]
+    }
+    println "map of start page offsets to merged documents: ${startPageDocName}"
+
+    pdfMergerUtility = new PDFMergerUtility()
+    //pdfMergerUtility.setDestinationFileName(out_pdf) //
+
+    // TODO: create header from index.html, that will give you header_lenght (in pages)
+    def final mem = MemoryUsageSetting.setupMainMemoryOnly()
+    def final result = new PDDocument(mem) //TEST: MemoryUsageSetting.setupMainMemoryOnly()
+    pdfs.forEach {
+        pdfMergerUtility.appendDocument(result,
+                                        new PageExtractor(it).extract())
     }
 
-    pdfMergerUtility.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+    println "OUTPUT PDF number of pages: ${result.getNumberOfPages()}"
+
+    // TODO: create and add bookmarks before writing the result
+
+    // NOTE: pdfMergerUtility.mergeDocuments(mem)
+    //       works *ONLY* pdfMergerUtility.addSource()
+
+    //createBookmarksPerPage(result) //this was only a test
+    createBookmarkPerAppendedDoc(result, startPageDocName) //[0:'test_input_a.pdf', 19: 'test_input_b.pdf', 37: 'test_input_c.pdf'])
+
+    println "OUTPUT PDF number of pages (after createBookmarks): ${result.getNumberOfPages()}"
+
+    result.save(out_pdf)
+    result.close()
+
+    println "OUTPUT written to: ${out_pdf}"
 
 } catch (Exception e) {
     System.err.println("exception while trying to merge PDF doc: ${out_pdf}; exception: ${e}");
+}
+
+PDDocument createBookmarkPerAppendedDoc(final PDDocument document, final Map originalDocs) {
+    def final outline = new PDDocumentOutline()
+    document.getDocumentCatalog().setDocumentOutline(outline)
+
+    def final pagesOutline = new PDOutlineItem()
+    pagesOutline.setTitle("Merged Documents") // patient name history/documents
+    outline.addLast(pagesOutline)
+
+    originalDocs.each { docStartPage, docName ->
+        def final page = document.getPage(docStartPage)
+
+        def final dest = new PDPageFitWidthDestination()
+        dest.setPage(page)
+
+        def final bookmark = new PDOutlineItem()
+        bookmark.setDestination(dest)
+        bookmark.setTitle(docName)
+        pagesOutline.addLast(bookmark)
+    }
+
+    pagesOutline.openNode()
+    outline.openNode()
+
+    // optional: show the outlines when opening the file
+    document.getDocumentCatalog().setPageMode(PageMode.USE_OUTLINES)
+    return document
+}
+
+// NOTE: this was only a test
+PDDocument createBookmarksPerPage(final PDDocument document) {
+    PDDocumentOutline outline =  new PDDocumentOutline();
+    document.getDocumentCatalog().setDocumentOutline( outline );
+    PDOutlineItem pagesOutline = new PDOutlineItem();
+    pagesOutline.setTitle( "Merged Documents" );
+    outline.addLast( pagesOutline );
+    int pageNum = 0;
+    for( PDPage page : document.getPages() )
+    {
+        pageNum++;
+        PDPageDestination dest = new PDPageFitWidthDestination();
+        // If you want to have several bookmarks pointing to different areas
+        // on the same page, have a look at the other classes derived from PDPageDestination.
+
+        dest.setPage( page );
+        PDOutlineItem bookmark = new PDOutlineItem();
+        bookmark.setDestination( dest );
+        bookmark.setTitle( "Page " + pageNum );
+        pagesOutline.addLast( bookmark );
+    }
+    pagesOutline.openNode();
+    outline.openNode();
+
+    // optional: show the outlines when opening the file
+    document.getDocumentCatalog().setPageMode(PageMode.USE_OUTLINES);
+    return document
 }
