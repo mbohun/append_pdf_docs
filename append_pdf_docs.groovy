@@ -19,31 +19,21 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlin
 import org.apache.pdfbox.multipdf.PageExtractor
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 
+println "input length: ${this.args.length}"
+println "input: ${this.args}"
+
 if (this.args.length < 1) {
     println '''
-        ERROR: no input URL
+        ERROR: no input file (with a list of PDF files to append/merge)
     '''
     return -1
 }
 
-def final html_doc_url = this.args[0]
+def final doc_to_append = []
 
-def final xmlSlurper = new XmlSlurper()
-// NOTE: setting these features *HAS* effect, XmlSlurper.parseText() still choked on <!doctype html>
-xmlSlurper.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
-// xmlSlurper.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-//      WITHOUT:
-//          [Fatal Error] index_htmltidy.html:1:10: DOCTYPE is disallowed when the feature "http://apache.org/xml/features/disallow-doctype-decl" set to true.
-//      WITH:
-//          [Fatal Error] index_htmltidy.html:6:3: The element type "meta" must be terminated by the matching end-tag "</meta>".
-//      TODO: review all http://apache.org/xml/features if there is a feature for the above tag error problem
-//
-def final doc = xmlSlurper.parse(html_doc_url)
-//println "doc: ${doc}"
-//println "doc.name: ${doc.name()}"
-
-def final doc_to_append =
-    doc.body.div.find { it.@id == 'main' }.div.find { it.@id == 'important' }.a*.@href*.toString()
+new File(this.args[0]).eachLine {
+    doc_to_append << it
+}
 
 doc_to_append.forEach {
     println "INPUT file found: ${it}"
