@@ -45,17 +45,7 @@ def final out_pdf = "test_pdf_merge-${System.currentTimeMillis()}.pdf"
 try {
 
     def final pdfs = doc_to_append.collect {
-        def final pdf_doc_name = it
-        //def final info = new PDDocumentInformation()
-        //info.setTitle(pdf_doc_name) //TODO: extract the actual basename wihout the file extension (.pdf)
-
-        //PDDocument.metaClass.toString = { ->
-        //    pdf_doc_name
-        //}
-
-        def final pdf_doc = PDDocument.load(new File(pdf_doc_name))
-        //pdf_doc.setDocumentInformation(info)
-        pdf_doc
+        PDDocument.load(new File(it))
     }
     println "PDFs loaded: ${pdfs}"
 
