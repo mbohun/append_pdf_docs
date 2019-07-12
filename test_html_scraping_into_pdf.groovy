@@ -95,12 +95,9 @@ try {
 
     println "OUTPUT PDF number of pages: ${result.getNumberOfPages()}"
 
-    // TODO: create and add bookmarks before writing the result
-
     // NOTE: pdfMergerUtility.mergeDocuments(mem)
     //       works *ONLY* pdfMergerUtility.addSource()
 
-    //createBookmarksPerPage(result) //this was only a test
     createBookmarkPerAppendedDoc(result, startPageDocName) //[0:'test_input_a.pdf', 19: 'test_input_b.pdf', 37: 'test_input_c.pdf'])
 
     println "OUTPUT PDF number of pages (after createBookmarks): ${result.getNumberOfPages()}"
@@ -139,34 +136,5 @@ PDDocument createBookmarkPerAppendedDoc(final PDDocument document, final Map ori
 
     // optional: show the outlines when opening the file
     document.getDocumentCatalog().setPageMode(PageMode.USE_OUTLINES)
-    return document
-}
-
-// NOTE: this was only a test
-PDDocument createBookmarksPerPage(final PDDocument document) {
-    PDDocumentOutline outline =  new PDDocumentOutline();
-    document.getDocumentCatalog().setDocumentOutline( outline );
-    PDOutlineItem pagesOutline = new PDOutlineItem();
-    pagesOutline.setTitle( "Merged Documents" );
-    outline.addLast( pagesOutline );
-    int pageNum = 0;
-    for( PDPage page : document.getPages() )
-    {
-        pageNum++;
-        PDPageDestination dest = new PDPageFitWidthDestination();
-        // If you want to have several bookmarks pointing to different areas
-        // on the same page, have a look at the other classes derived from PDPageDestination.
-
-        dest.setPage( page );
-        PDOutlineItem bookmark = new PDOutlineItem();
-        bookmark.setDestination( dest );
-        bookmark.setTitle( "Page " + pageNum );
-        pagesOutline.addLast( bookmark );
-    }
-    pagesOutline.openNode();
-    outline.openNode();
-
-    // optional: show the outlines when opening the file
-    document.getDocumentCatalog().setPageMode(PageMode.USE_OUTLINES);
     return document
 }
