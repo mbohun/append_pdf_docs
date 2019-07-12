@@ -9,7 +9,7 @@ import org.apache.pdfbox.io.MemoryUsageSetting
 
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.pdmodel.PDDocument
-//import org.apache.pdfbox.pdmodel.PDDocumentInformation
+import org.apache.pdfbox.pdmodel.PDDocumentInformation
 import org.apache.pdfbox.pdmodel.PageMode
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageFitWidthDestination
@@ -84,6 +84,10 @@ try {
     }
 
     println "OUTPUT PDF number of pages: ${result.getNumberOfPages()}"
+
+    def final info = new PDDocumentInformation()
+    info.setTitle("Merged Documents") //TODO: extract the actual basename wihout the file extension (.pdf)
+    result.setDocumentInformation(info)
 
     // NOTE: pdfMergerUtility.mergeDocuments(mem)
     //       works *ONLY* pdfMergerUtility.addSource()
