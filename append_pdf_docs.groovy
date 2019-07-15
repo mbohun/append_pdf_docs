@@ -15,6 +15,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle
 import org.apache.pdfbox.pdmodel.font.PDFont
 import org.apache.pdfbox.pdmodel.font.PDType1Font
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionGoTo
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDBorderStyleDictionary
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.destination.PDPageDestination
@@ -94,6 +95,7 @@ try {
 
     createBookmarkPerAppendedDoc(result, startPageDocName) //[0:'test_input_a.pdf', 19: 'test_input_b.pdf', 37: 'test_input_c.pdf'])
     //createAnnotationPerAppendedDoc(result, startPageDocName)
+    replaceAnnotations(result, startPageDocName)
 
     println "OUTPUT PDF number of pages (after createBookmarks): ${result.getNumberOfPages()}"
 
@@ -198,4 +200,34 @@ PDDocument createAnnotationPerAppendedDoc(final PDDocument document, final Map o
 */
       return document
     //}
+}
+
+PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs) {
+    document.getPages().each {
+        def final page_annotations = it.getAnnotations()
+        page_annotations.each {
+            if(it instanceof PDAnnotationLink) {
+                def final link = (PDAnnotationLink)it
+                def final action = link.getAction()
+                if(action instanceof PDActionURI) {
+                    def final uri = (PDActionURI)action
+                    def final oldURI = uri.getURI()
+                    if (oldURI.find('^file://')) {
+                        def final entry = originalDocs.find { key, value -> println "...DEBUG: key=${key}, value=${value}"; def final doc_name = (String)value; return oldURI.find(doc_name) }
+                        if (entry) {
+                            println "FOUND old annotation: ${oldURI}; REPLACING WITH: ${entry}"
+                            def final pageDestination = new PDPageFitWidthDestination();
+                            def final page_no = entry.key as int
+                            def final page = document.getPage(page_no)
+                            pageDestination.setPage(page)
+                            link.setAction(null)
+                            link.setDestination(pageDestination)
+                        }
+                    }
+                    //uri.setURI( newURI );
+              }
+          }
+        }
+    }
+    return document
 }
