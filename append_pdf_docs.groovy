@@ -56,8 +56,8 @@ try {
 
     //NOTE: 1 because we are prepeding
 
-    def start_page = 1 as Integer
-    def final startPageDocName = [0: 'index']
+    def start_page = 0 as Integer
+    def final startPageDocName = [:] // [0: 'index']
     doc_to_append.eachWithIndex { it, i ->
         startPageDocName[start_page] = it // TODO: CLEANUP: make a list of page offsets
         start_page += pdfs_number_pages[i]
@@ -72,11 +72,11 @@ try {
     def final result = new PDDocument(mem) //TEST: MemoryUsageSetting.setupMainMemoryOnly()
 
     // create the index page and doc
-    def final doc_index = new PDDocument()
-    doc_index.addPage(new PDPage())
+    //def final doc_index = new PDDocument()
+    //doc_index.addPage(new PDPage())
     //doc_index.close()
 
-    pdfMergerUtility.appendDocument(result, doc_index)
+    //pdfMergerUtility.appendDocument(result, doc_index)
 
     pdfs.forEach {
         pdfMergerUtility.appendDocument(result,
@@ -93,7 +93,7 @@ try {
     //       works *ONLY* pdfMergerUtility.addSource()
 
     createBookmarkPerAppendedDoc(result, startPageDocName) //[0:'test_input_a.pdf', 19: 'test_input_b.pdf', 37: 'test_input_c.pdf'])
-    createAnnotationPerAppendedDoc(result, startPageDocName)
+    //createAnnotationPerAppendedDoc(result, startPageDocName)
 
     println "OUTPUT PDF number of pages (after createBookmarks): ${result.getNumberOfPages()}"
 
@@ -152,19 +152,25 @@ PDDocument createAnnotationPerAppendedDoc(final PDDocument document, final Map o
 
         def final contents = new PDPageContentStream(document, page_index)
         contents.beginText()
-        contents.setFont(font, 18)
 
-        def final x = (ph - INCH - 18) as float
-        contents.newLineAtOffset(INCH, x) //?
+        def final FONT_SIZE = 10
 
+        contents.setFont(font, FONT_SIZE)
+
+        def final start_page_tx = INCH/2 as float
+        def final start_page_ty = (ph - FONT_SIZE) as float
+        contents.newLineAtOffset(start_page_tx, start_page_ty)
+
+        def final tx = 0 as float
+        def final ty = -(INCH / 4) as float
         originalDocs.each { docStartPage, docName ->
-            contents.newLineAtOffset(0 as float, -(INCH / 2) as float)
+            contents.newLineAtOffset(tx, ty)
             contents.showText(docName)
         }
 
         contents.endText()
         contents.close()
-
+/*
         originalDocs.each { docStartPage, docName ->
             def final page = document.getPage(docStartPage)
 
@@ -189,7 +195,7 @@ PDDocument createAnnotationPerAppendedDoc(final PDDocument document, final Map o
 
             annotations_index.add(pageLink)
         }
-
+*/
       return document
     //}
 }
