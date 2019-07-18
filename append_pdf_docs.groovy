@@ -213,15 +213,19 @@ PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs)
                     def final uri = (PDActionURI)action
                     def final oldURI = uri.getURI()
                     if (oldURI.find('^file://')) {
-                        def final entry = originalDocs.find { key, value -> println "...DEBUG: key=${key}, value=${value}"; def final doc_name = (String)value; return oldURI.find(doc_name) }
+                        def final entry = originalDocs.find { key, value ->
+                            //println "...DEBUG: key=${key}, value=${value}";
+                            //def final doc_name = (String)value
+                            return oldURI.find("${value}\$")
+                        }
                         if (entry) {
                             println "FOUND old annotation: ${oldURI}; REPLACING WITH: ${entry}"
-                            def final pageDestination = new PDPageFitWidthDestination();
-                            def final page_no = entry.key as int
-                            def final page = document.getPage(page_no)
+                            def final pageDestination = new PDPageFitWidthDestination()
+                            //def final page_no = entry.key as int
+                            def final page = document.getPage(entry.key)
                             pageDestination.setPage(page)
-                            link.setAction(null)
-                            link.setDestination(pageDestination)
+                            link.setAction(null) // REMOVE the OLD annotation (action)
+                            link.setDestination(pageDestination) // SET the NEW annotation destination (PDPageFitWidthDestination)
                         }
                     }
                     //uri.setURI( newURI );
