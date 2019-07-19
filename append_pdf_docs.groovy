@@ -24,6 +24,7 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocume
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem
 import org.apache.pdfbox.multipdf.PageExtractor
 import org.apache.pdfbox.multipdf.PDFMergerUtility
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject
 
 println "input length: ${this.args.length}"
 println "input: ${this.args}"
@@ -44,9 +45,23 @@ doc_to_append.forEach {
 def final out_pdf = "test_pdf_merge-${System.currentTimeMillis()}.pdf"
 
 try {
+    def final convertor = [
+      'pdf':  { file -> println "converting $file to PDF..."; PDDocument.load(new File(file)) },
+      'jpg':  { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) },
+      'jpeg': { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) },
+      'png':  { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) },
+      'gif':  { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) }
+    ]
 
-    def final pdfs = doc_to_append.collect {
-        PDDocument.load(new File(it))
+    def final pdfs = doc_to_append.collect { it ->
+        def final ext = it.substring(it.lastIndexOf('.') + 1)
+        def final ext_supported_flag = convertor.containsKey(ext)
+        println "CHECKING ${it} is file type supported? ... ${ext_supported_flag}"
+        if (ext_supported_flag) {
+            convertor[ext](it)
+        } else {
+            System.exit(-1)
+        }
     }
     println "PDFs loaded: ${pdfs}"
 
@@ -234,4 +249,16 @@ PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs)
         }
     }
     return document
+}
+
+PDDocument createPDDocumentFromImage(final String fileName) {
+    def final doc = new PDDocument()
+    def final page = new PDPage()
+    doc.addPage(page)
+
+    def final img = PDImageXObject.createFromFileByExtension(new File(fileName), doc)
+    def final contents = new PDPageContentStream(doc, page)
+    contents.drawImage(img, 10, 10)
+    contents.close()
+    return doc
 }
