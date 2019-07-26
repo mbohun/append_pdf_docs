@@ -26,8 +26,13 @@ import org.apache.pdfbox.multipdf.PageExtractor
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject
 
-println "input length: ${this.args.length}"
-println "input: ${this.args}"
+// TODO:
+// - CHECK for resource leaks http://www.pdfbox.org/pdfbox-user-guide/faqs/ (see 1.4)
+//
+//
+//
+//println "input length: ${this.args.length}"
+println "INPUT (file list): ${this.args}"
 
 if (this.args.length < 1) {
     println '''
@@ -38,37 +43,45 @@ if (this.args.length < 1) {
 
 def final doc_to_append = new File(this.args[0]).collect { it }
 doc_to_append.forEach {
-    println "INPUT file found: ${it}"
+    println "    INPUT file found: ${it}"
 }
 
 // TODO: cleanup
 def final out_pdf = "test_pdf_merge-${System.currentTimeMillis()}.pdf"
 
 try {
+
+    // NOTE: Although we did test/confirm the conversion of images (jpg, png, gif) with pdfbox, at the moment
+    //       we are using libreoffice CLI to do the conversion to PDF.
+    //
     def final convertor = [
-      'pdf':  { file -> println "converting $file to PDF..."; PDDocument.load(new File(file)) },
-      'jpg':  { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) },
-      'jpeg': { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) },
-      'png':  { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) },
-      'gif':  { file -> println "converting $file to PDF..."; createPDDocumentFromImage(file) }
+      'pdf':  { file -> PDDocument.load(new File(file)) },
+      'jpg':  { file -> createPDDocumentFromImage(file) },
+      'jpeg': { file -> createPDDocumentFromImage(file) },
+      'png':  { file -> createPDDocumentFromImage(file) },
+      'gif':  { file -> createPDDocumentFromImage(file) }
     ]
 
+    // TODO: check if file exists and is readable in a separate step before this?
+    //       (as in do not bother with the rest of processing if the input is bogus)
+    //
+    println "CHECKING if file type supported:"
     def final pdfs = doc_to_append.collect { it ->
         def final ext = it.substring(it.lastIndexOf('.') + 1)
         def final ext_supported_flag = convertor.containsKey(ext)
-        println "CHECKING ${it} is file type supported? ... ${ext_supported_flag}"
+        println "    CHECKING ${it} is file type supported? ... ${ext_supported_flag}"
         if (ext_supported_flag) {
             convertor[ext](it)
         } else {
             System.exit(-1)
         }
     }
-    println "PDFs loaded: ${pdfs}"
+    //println "PDFs loaded: ${pdfs}"
 
     def final pdfs_number_pages = pdfs.collect {
         it.getNumberOfPages()
     }
-    println "PDFs number of pages: ${pdfs_number_pages}; total: ${pdfs_number_pages.sum()}"
+    println "PDFs number of pages (per each document): ${pdfs_number_pages}; total: ${pdfs_number_pages.sum()}"
 
     //NOTE: 1 because we are prepeding
 
@@ -78,7 +91,7 @@ try {
         startPageDocName[start_page] = it // TODO: CLEANUP: make a list of page offsets
         start_page += pdfs_number_pages[i]
     }
-    println "map of start page offsets to merged documents: ${startPageDocName}"
+    println "map of start page offsets to merged documents:\n${ def buffy = ''<<''; startPageDocName.each{ entry ->  def final msg = '    ' + entry.key + ':' + entry.value + '\n'; buffy << msg; }; return buffy }"
 
     pdfMergerUtility = new PDFMergerUtility()
     //pdfMergerUtility.setDestinationFileName(out_pdf) //
@@ -99,7 +112,7 @@ try {
                                         new PageExtractor(it).extract())
     }
 
-    println "OUTPUT PDF number of pages: ${result.getNumberOfPages()}"
+    //println "OUTPUT PDF number of pages: ${result.getNumberOfPages()}"
 
     def final info = new PDDocumentInformation()
     info.setTitle("Merged Documents") //TODO: extract the actual basename wihout the file extension (.pdf)
@@ -110,9 +123,10 @@ try {
 
     createBookmarkPerAppendedDoc(result, startPageDocName) //[0:'test_input_a.pdf', 19: 'test_input_b.pdf', 37: 'test_input_c.pdf'])
     //createAnnotationPerAppendedDoc(result, startPageDocName)
+    println 'REPLACING annotations:'
     replaceAnnotations(result, startPageDocName)
 
-    println "OUTPUT PDF number of pages (after createBookmarks): ${result.getNumberOfPages()}"
+    //println "OUTPUT PDF number of pages (after createBookmarks): ${result.getNumberOfPages()}"
 
     result.save(out_pdf)
     result.close()
@@ -234,7 +248,7 @@ PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs)
                             return oldURI.find("${value}\$")
                         }
                         if (entry) {
-                            println "FOUND old annotation: ${oldURI}; REPLACING WITH: ${entry}"
+                            println "    FOUND old annotation: ${oldURI}; REPLACING WITH: ${entry}"
                             def final pageDestination = new PDPageFitWidthDestination()
                             //def final page_no = entry.key as int
                             def final page = document.getPage(entry.key)
