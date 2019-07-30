@@ -10,7 +10,7 @@ def final TABLE_INDEX_ATTACHMENTS = 25 as int
 
 if (this.args.length < 1) {
     println '''
-        ERROR: no input URL
+        ERROR: no input HTML file
     '''
     return -1
 }
