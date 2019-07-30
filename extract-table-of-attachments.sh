@@ -3,7 +3,9 @@
 #echo "INPUT: $1"
 
 # XPath "//html/body/table[26]" (get the 26th table); NOTE: XPath index numbering starts from 1
-table=`cat "$1" | xmllint --html --xmlout - | xmllint --xpath "//html/body/table[26]" - `
+TABLE_INDEX_ATTACHMENTS=26
+
+table=`cat "$1" | xmllint --html --xmlout - | xmllint --xpath "//html/body/table[${TABLE_INDEX_ATTACHMENTS}]" - `
 table_row_count=`echo $table | xmllint --xpath "count(//table/tr)" - `
 
 # NOTE: The first row <tr> of the table is a dummy header (it does NOT contain any data)
