@@ -91,7 +91,11 @@ try {
         startPageDocName[start_page] = it // TODO: CLEANUP: make a list of page offsets
         start_page += pdfs_number_pages[i]
     }
-    println "map of start page offsets to merged documents:\n${ def buffy = ''<<''; startPageDocName.each{ entry ->  def final msg = '    ' + entry.key + ':' + entry.value + '\n'; buffy << msg; }; return buffy }"
+    def buffy = ''<<''
+    startPageDocName.each { entry ->
+        buffy << '    ' + entry.key + ':' + entry.value + '\n'
+    }
+    println "map of start page offsets to merged documents:\n${buffy}"
 
     pdfMergerUtility = new PDFMergerUtility()
     //pdfMergerUtility.setDestinationFileName(out_pdf) //
