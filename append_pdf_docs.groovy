@@ -34,6 +34,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject
 //println "input length: ${this.args.length}"
 println "INPUT (file list): ${this.args}"
 
+// NOTE: consider using the standard groovy CliBuilder for managing the CLI options/args
 if (this.args.length < 1) {
     println '''
         ERROR: no input file (with a list of PDF files to append/merge)
