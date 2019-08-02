@@ -263,8 +263,8 @@ PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs)
                         }
                     }
                     //uri.setURI( newURI );
-              }
-          }
+                }
+            }
         }
     }
     return document
