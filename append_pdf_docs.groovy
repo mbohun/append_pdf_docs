@@ -276,8 +276,10 @@ PDDocument createPDDocumentFromImage(final String fileName) {
     doc.addPage(page)
 
     def final img = PDImageXObject.createFromFileByExtension(new File(fileName), doc)
+    println "        DEBUG: created PDImageXObject from: ${fileName}; w=${img.getWidth()} h=${img.getHeight()}"
+    page.setMediaBox(new PDRectangle(img.getWidth(), img.getHeight()))
     def final contents = new PDPageContentStream(doc, page)
-    contents.drawImage(img, 10, 10)
+    contents.drawImage(img, 10, 10, img.getWidth(), img.getHeight())
     contents.close()
     return doc
 }
