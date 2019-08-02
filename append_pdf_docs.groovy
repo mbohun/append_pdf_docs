@@ -32,7 +32,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject
 //
 //
 //println "input length: ${this.args.length}"
-println "INPUT (file list): ${this.args}"
+println "INPUT (list of files to append): ${this.args}"
 
 // NOTE: consider using the standard groovy CliBuilder for managing the CLI options/args
 if (this.args.length < 1) {
