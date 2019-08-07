@@ -56,11 +56,11 @@ try {
     //       we are using libreoffice CLI to do the conversion to PDF.
     //
     def final convertor = [
-      'pdf':  { file -> PDDocument.load(new File(file)) },
-      'jpg':  { file -> createPDDocumentFromImage(file) },
-      'jpeg': { file -> createPDDocumentFromImage(file) },
-      'png':  { file -> createPDDocumentFromImage(file) },
-      'gif':  { file -> createPDDocumentFromImage(file) }
+	'pdf':  { file -> PDDocument.load(new File(file)) },
+	'jpg':  { file -> createPDDocumentFromImage(file) },
+	'jpeg': { file -> createPDDocumentFromImage(file) },
+	'png':  { file -> createPDDocumentFromImage(file) },
+	'gif':  { file -> createPDDocumentFromImage(file) }
     ]
 
     // TODO: check if file exists and is readable in a separate step before this?
