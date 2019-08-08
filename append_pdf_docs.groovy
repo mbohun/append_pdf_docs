@@ -172,6 +172,11 @@ PDDocument createBookmarkPerAppendedDoc(final PDDocument document, final Map ori
 }
 
 PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs) {
+    // TODO: Ideally we would restrict/narrow-down the search-and-replacement
+    //       of annotation-s to the PDFPage-s with the "Attachments" table
+    //       OR AT LEAST restrict the search-and-replacement to the 1st doc
+    //       (originally the HTML doc).
+    //
     document.getPages().each {
         def final page_annotations = it.getAnnotations()
         page_annotations.each {
@@ -182,13 +187,19 @@ PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs)
                     def final uri = (PDActionURI)action
                     def final oldURI = uri.getURI()
                     if (oldURI.find('^file://')) {
+                        // NOTE: We found an existing ("to-external-destination" file:// ) annotation.
+                        //       For clarity and diagnostic we report this find to the user; this helps
+                        //       to understand the reason behind the failure to match-and-replace an
+                        //       annotation if there is one.
+                        //
+                        println "    FOUND annotation: ${oldURI}"
                         def final entry = originalDocs.find { key, value ->
                             //println "...DEBUG: key=${key}, value=${value}";
                             //def final doc_name = (String)value
                             return oldURI.find("${value}\$")
                         }
                         if (entry) {
-                            println "    FOUND old annotation: ${oldURI}; REPLACING WITH: ${entry}"
+                            println "    REPLACING annotation: ${entry}"
                             def final pageDestination = new PDPageFitWidthDestination()
                             //def final page_no = entry.key as int
                             def final page = document.getPage(entry.key)
