@@ -199,7 +199,7 @@ PDDocument replaceAnnotations(final PDDocument document, final Map originalDocs)
                             return oldURI.find("${value}\$")
                         }
                         if (entry) {
-                            println "    REPLACING annotation: ${entry}"
+                            println "           REPLACING: ${entry}"
                             def final pageDestination = new PDPageFitWidthDestination()
                             //def final page_no = entry.key as int
                             def final page = document.getPage(entry.key)
