@@ -33,6 +33,7 @@ def final htmlFileFlag = htmlFile.isFile()
 println "htmlFile: ${htmlFile}; isFile(): ${htmlFileFlag}"
 if (!htmlFileFlag) {
     // NOTE: Do *NOT* bother continuing
+    System.err.println "ERROR: can't find or access file: ${htmlFileName}"
     System.exit(-1)
 }
 
