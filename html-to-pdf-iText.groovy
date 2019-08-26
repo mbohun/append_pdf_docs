@@ -2,7 +2,7 @@
 
 import groovy.xml.XmlUtil
 
-@Grab('net.sourceforge.nekohtml:nekohtml:1.9.21')
+@Grab('net.sourceforge.nekohtml:nekohtml:1.9.22')
 import org.cyberneko.html.parsers.SAXParser
 
 @Grab('com.itextpdf:itextpdf:5.5.13.1')
