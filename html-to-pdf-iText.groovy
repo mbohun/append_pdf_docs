@@ -1,9 +1,5 @@
 #!/usr/bin/env groovy
 
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-
 import groovy.xml.XmlUtil
 
 @Grab('net.sourceforge.nekohtml:nekohtml:1.9.21')
@@ -11,7 +7,6 @@ import org.cyberneko.html.parsers.SAXParser
 
 @Grab('com.itextpdf:itextpdf:5.5.13.1')
 import com.itextpdf.text.Document
-import com.itextpdf.text.DocumentException
 import com.itextpdf.text.pdf.PdfWriter
 
 @Grab(group='com.itextpdf.tool', module='xmlworker', version='5.5.13.1')
