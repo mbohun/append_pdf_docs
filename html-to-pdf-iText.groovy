@@ -39,7 +39,11 @@ parser.setFeature("http://cyberneko.org/html/features/augmentations", true);
 parser.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
 def final doc = new XmlSlurper(parser).parse(new File(htmlFileName))
 
-def final doc_fixed = XmlUtil.serialize(doc)
+// NOTE: Remove the <c></c> tags/elements, because itextpdf doesn't undertand those
+//       and it removes them including the text enclosed in <c></c> and that is
+//       something we clearly do NOT want
+//
+def final doc_fixed = XmlUtil.serialize(doc).replace("<c>", "").replace("</c>", "")
 
 // NOTE: Saving the intermediate fixed/adjusted HTML file for review/examination
 // of the final PDF.
