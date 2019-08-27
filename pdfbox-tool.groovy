@@ -3,6 +3,10 @@
 @Grab('org.apache.pdfbox:pdfbox:2.0.15')
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
+import org.apache.pdfbox.cos.COSArray
+import org.apache.pdfbox.cos.COSString
+import org.apache.pdfbox.contentstream.operator.Operator
+import org.apache.pdfbox.pdfparser.PDFStreamParser
 import org.apache.pdfbox.text.PDFTextStripper
 
 import java.io.File
@@ -18,19 +22,41 @@ if (this.args.length < 1) {
 }
 
 def final pdfFileName = this.args[0]
-
 def final pdf = PDDocument.load(new File(pdfFileName))
+
+def final result = [
+    "doc": pdfFileName,
+    "pages": [],
+    "page-start-offsets": []
+]
+
+def offset = 0
+def final allPagesTextBuffer = new StringBuffer()
+
 def final pdfTextStripper = new PDFTextStripper()
-
-
-def pageno = 0
-def final pdfToList = pdf.getPages().collect { page ->
+def final pdfToList = pdf.getPages().eachWithIndex { page, pageno ->
     pdfTextStripper.setStartPage(pageno)
     pdfTextStripper.setEndPage(pageno)
-    pageno++
 
-    pdfTextStripper.getText(pdf)
+    def final text = pdfTextStripper.getText(pdf) 
+    result["pages"] << text
+
+    // NOTE: We are merging all page-s text into one StringBuffer (String).
+    //       This is required for exact/accurate searching for strings in the
+    //       text.
+    //       Naive approach is to search for a given string in a text of
+    //       one page, BUT that FAILS if your string is pread across multiple
+    //       (usually 2 pages). This way we merge/append all pages (text)
+    //       into one String, save the page start offset-s into a list of
+    //       offsets, then we search for our string-s in the merged string,
+    //       and use the list of offsets to identify on which page the string
+    //       we are searching for starts.
+    //
+    allPagesTextBuffer << text
+
+    result["page-start-offsets"] << offset
+    offset += text.length()
+    
 }
 
-//println "pdfToList.size(): ${pdfToList.size()}"
-println "${JsonOutput.prettyPrint(JsonOutput.toJson(pdfToList))}"
+println "${JsonOutput.prettyPrint(JsonOutput.toJson(result))}"
