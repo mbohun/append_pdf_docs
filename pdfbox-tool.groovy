@@ -59,4 +59,25 @@ def final pdfToList = pdf.getPages().eachWithIndex { page, pageno ->
     
 }
 
+def final searchTerms = [
+    "\nAttachments Authorised By Code\n",
+    "\nDue Diary Entries Authorised By Code\n"
+]
+
+result["search-terms-offsets"] = searchTerms.collect {
+    def final pos = allPagesTextBuffer.indexOf(it) // we could continue the search from the last match position
+    if (pos > -1) {
+        def final i = result["page-start-offsets"].findIndexOf { it >= pos }
+        if (pos == result["page-start-offsets"][i]) {
+            //println "DEBUG: searchTerm=${it}; pos=${pos}; page=${i}"
+            i
+        } else {
+            //println "DEBUG: searchTerm=${it}; pos=${pos}; page=${i-1}"
+            i - 1
+        }
+    } else {
+        -1 // pos; searchTerm not found
+    }
+}
+
 println "${JsonOutput.prettyPrint(JsonOutput.toJson(result))}"
