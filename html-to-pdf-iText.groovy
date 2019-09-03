@@ -5,12 +5,12 @@ import groovy.xml.XmlUtil
 @Grab('net.sourceforge.nekohtml:nekohtml:1.9.22')
 import org.cyberneko.html.parsers.SAXParser
 
-@Grab('com.itextpdf:itextpdf:5.5.13.1')
-import com.itextpdf.text.Document
-import com.itextpdf.text.pdf.PdfWriter
-
-@Grab(group='com.itextpdf.tool', module='xmlworker', version='5.5.13.1')
-import com.itextpdf.tool.xml.XMLWorkerHelper
+@Grapes([
+    @Grab(group='com.itextpdf', module='itext7-core', version='7.1.7', type='pom'),
+    @Grab(group='com.itextpdf', module='html2pdf', version='2.1.4')
+])
+import com.itextpdf.html2pdf.ConverterProperties
+import com.itextpdf.html2pdf.HtmlConverter
 
 if (this.args.length < 1) {
     println '''
@@ -46,14 +46,13 @@ new File(outputFixedHtml).withWriter { out ->
     out.println "${doc_fixed}"
 }
 
-def final pdfDoc = new Document()
-def final pdfWriter = PdfWriter.getInstance(pdfDoc, new FileOutputStream(outputPdf))
-pdfDoc.open()
+// NOTE: itext7 part (it is much simpler compared to the itext5
+def final baseUri = htmlFileName[0..htmlFileName.lastIndexOf(System.getProperty('file.separator'))]
+def final converterProperties = new ConverterProperties()
+converterProperties.setBaseUri(baseUri);
 
-XMLWorkerHelper.getInstance().parseXHtml(pdfWriter,
-                                         pdfDoc,
-                                         new ByteArrayInputStream(doc_fixed.getBytes()))
-
-pdfDoc.close()
+HtmlConverter.convertToPdf(new ByteArrayInputStream(doc_fixed.getBytes()),
+                           new FileOutputStream(outputPdf),
+                           converterProperties);
 
 println "OUTPUT: ${outputPdf}"
