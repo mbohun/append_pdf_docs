@@ -54,6 +54,11 @@ def final baseUri = htmlFileName[0..htmlFileName.lastIndexOf(System.getProperty(
 def final converterProperties = new ConverterProperties()
 converterProperties.setBaseUri(baseUri);
 
+// NOTE: For simple/straightforward conversions there is:
+//       HtmlConverter.convertToPdf(inputHtmlFile, outputPdfFile);
+//       HOWEVER we are *NOT* using it because we have to adjust/sanitize/fix
+//       out HTML input file first.
+//
 HtmlConverter.convertToPdf(new ByteArrayInputStream(doc_fixed.getBytes()),
                            new FileOutputStream(outputPdf),
                            converterProperties);
