@@ -3,10 +3,6 @@
 @Grab('org.apache.pdfbox:pdfbox:2.0.15')
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
-import org.apache.pdfbox.cos.COSArray
-import org.apache.pdfbox.cos.COSString
-import org.apache.pdfbox.contentstream.operator.Operator
-import org.apache.pdfbox.pdfparser.PDFStreamParser
 import org.apache.pdfbox.text.PDFTextStripper
 
 import java.io.File
