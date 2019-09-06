@@ -4,6 +4,8 @@
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.text.PDFTextStripper
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink
 
 import java.io.File
 import java.io.IOException
@@ -15,6 +17,7 @@ import groovy.cli.commons.OptionAccessor
 def final cli = new CliBuilder(usage: 'pdfbox-tool.groovy [options] <PDF file>')
 cli.h(longOpt: 'help', 'display usage')
 cli.t(longOpt: 'text-extract', 'extract the text from PDF doc', args: 1, type: String)
+cli.a(longOpt: 'annotations-list', 'search for PDAnnotations in the PDF doc, and list their details', args: 1, type: String)
 
 def final options = cli.parse(args)
 
@@ -29,6 +32,10 @@ try {
     if (options['text-extract']) {
         result['doc'] = options['text-extract']
         textExtract(result)
+    }
+    if (options['annotations-list']) {
+        result['doc'] = options['annotations-list']
+        annotationsList(result)
     }
 
 } catch (Exception e) {
@@ -89,6 +96,23 @@ def textExtract(result) {
             }
         } else {
             -1 // pos; searchTerm not found
+        }
+    }
+}
+
+def annotationsList(result) {
+    def final pdf = PDDocument.load(new File(result['doc']))
+    result["annotations"] = []
+    pdf.getPages().eachWithIndex { page, pageno ->
+        page.getAnnotations().each { ann ->
+            if (ann instanceof PDAnnotationLink) {
+                def final link = (PDAnnotationLink)ann
+                def final action = link.getAction()
+                if(action instanceof PDActionURI) {
+                    def final uri = (PDActionURI)action
+                    result["annotations"] << uri.getURI()
+                }
+            }
         }
     }
 }
