@@ -46,7 +46,7 @@ println "${JsonOutput.prettyPrint(JsonOutput.toJson(result))}"
 
 def textExtract(result) {
     def final pdf = PDDocument.load(new File(result['doc']))
-    
+    result["pages-number-total"] = pdf.getPages().size()
     result["pages"] = []
     result["page-start-offsets"] = []
 
