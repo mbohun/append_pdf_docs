@@ -1,9 +1,14 @@
 *~
 *.bmp
+*.doc
+*.docx
 *.gif
 *.jpeg
 *.jpg
 *.out
 *.pdf
 *.png
+*.rtf
 *.tiff
+*.xls
+*.xlsx
