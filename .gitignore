@@ -1,3 +1,9 @@
-*.pdf
 *~
+*.bmp
+*.gif
+*.jpeg
+*.jpg
 *.out
+*.pdf
+*.png
+*.tiff
