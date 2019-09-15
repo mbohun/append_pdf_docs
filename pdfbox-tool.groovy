@@ -18,6 +18,10 @@ import groovy.json.JsonOutput
 import groovy.cli.commons.CliBuilder
 import groovy.cli.commons.OptionAccessor
 
+import org.w3c.dom.Document
+import org.w3c.dom.Element
+import groovy.xml.XmlUtil
+
 def final cli = new CliBuilder(usage: 'pdfbox-tool.groovy [options] <PDF file>')
 cli.h(longOpt: 'help', 'display usage')
 cli.t(longOpt: 'text-extract', 'extract the text from PDF doc', args: 1, type: String)
@@ -141,9 +145,31 @@ def formFields(result) {
         return
     }
 
-    def final fields = acroForm.getFields()
-    result["acroform-fields-size"] = fields.size()
-    result["acroform-fields"] = fields.collect { field ->
-        field.getPartialName()
+    // NOTE: "XFA forms can be created and used as PDF 1.5 - 1.7 files or as XDP
+    //       (XML Data Package). The format of an XFA resource in PDF
+    //       is described by the XML Data Package Specification."
+    //       https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+    //
+    //       PDF may contain XFA in XDP format, but XFA may also contain PDF.
+    //
+    result["acroform-has-xfa"] = acroForm.hasXFA()
+    if (result["acroform-has-xfa"]) {
+        result["acroform-xfa-if-dynamic"] = acroForm.xfaIsDynamic()
+        def final xfa = acroForm.getXFA()
+        def final dom = xfa.getDocument().getDocumentElement()
+        def final xml = XmlUtil.serialize(dom)
+
+        println "${xml}"
+        System.exit(0) //TODO: this is just a TMP solution
+        result["xfa"] = xml
+
+    } else {
+        // NOTE: This is for *NON* XFA AcroForm processing *ONLY*
+        //
+        def final fields = acroForm.getFields()
+        result["acroform-fields-size"] = fields.size()
+        result["acroform-fields"] = fields.collect { field ->
+            field.getPartialName()
+        }
     }
 }
