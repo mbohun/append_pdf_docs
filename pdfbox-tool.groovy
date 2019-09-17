@@ -22,33 +22,43 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import groovy.xml.XmlUtil
 
-def final cli = new CliBuilder(usage: 'pdfbox-tool.groovy [options] <PDF file>')
-cli.h(longOpt: 'help', 'display usage')
-cli.t(longOpt: 'text-extract', 'extract the text from PDF doc', args: 1, type: String)
-cli.a(longOpt: 'annotations-list', 'search for PDAnnotations in the PDF doc, and list their details', args: 1, type: String)
-cli.f(longOpt: 'form-fields', 'check if the PDF doc contains an AcroForm, and if yes list the form fields', args: 1, type: String)
-
-def final options = cli.parse(args)
-
-if (options.h) {
-    cli.usage()
-    System.exit(0)
-}
-
 def final result = [:]
 
 try {
+
+    result['session-timestamp'] = System.currentTimeMillis()
+    result['session-args'] = args
+    result['doc'] = args[-1]
+
+    def final cli = new CliBuilder(usage: 'pdfbox-tool.groovy [options] <PDF file>')
+    cli.h(longOpt: 'help', 'Display help.')
+    cli.t(longOpt: 'text-extract', 'Extract the text from the PDF file.')
+    cli.a(longOpt: 'annotations-list', 'Search the PDF file for PDAnnotations and list their details.')
+    cli.f(longOpt: 'form-info', 'Check if the PDF file contains a form, and list the form information.')
+    cli._(longOpt: 'xfa-dump', 'If the PDF file contains a XFA, extract and write it into XFA xml file.')
+
+    def final options = cli.parse(args[0..-2])
+
+    if (options.h) {
+        cli.usage()
+        System.exit(0)
+    }
+
+    // TODO: The flags are not mutually-exclusive: This will be a for_each:
+    //       from-processor-to-processor, each processor adding it's specific info
+    //       to the result Map (JSON).
+    //
     if (options['text-extract']) {
-        result['doc'] = options['text-extract']
         textExtract(result)
     }
     if (options['annotations-list']) {
-        result['doc'] = options['annotations-list']
         annotationsList(result)
     }
-    if (options['form-fields']) {
-        result['doc'] = options['form-fields']
-        formFields(result)
+    if (options['form-info']) {
+        formInfo(result)
+    }
+    if (options['xfa-dump']) {
+        xfaDump(result)
     }
 
 } catch (Exception e) {
@@ -133,7 +143,7 @@ def annotationsList(result) {
 
 // NOTE: Each PDF doc can contain max 1 AcroForm.
 //
-def formFields(result) {
+def formInfo(result) {
     def final pdf = PDDocument.load(new File(result['doc']))
     result["pdf-version"] = pdf.getVersion()
     result["pages-number-total"] = pdf.getPages().size()
@@ -154,14 +164,7 @@ def formFields(result) {
     //
     result["acroform-has-xfa"] = acroForm.hasXFA()
     if (result["acroform-has-xfa"]) {
-        result["acroform-xfa-if-dynamic"] = acroForm.xfaIsDynamic()
-        def final xfa = acroForm.getXFA()
-        def final dom = xfa.getDocument().getDocumentElement()
-        def final xml = XmlUtil.serialize(dom)
-
-        println "${xml}"
-        System.exit(0) //TODO: this is just a TMP solution
-        result["xfa"] = xml
+        result["acroform-xfa-is-dynamic"] = acroForm.xfaIsDynamic()
 
     } else {
         // NOTE: This is for *NON* XFA AcroForm processing *ONLY*
@@ -171,5 +174,40 @@ def formFields(result) {
         result["acroform-fields"] = fields.collect { field ->
             field.getPartialName()
         }
+    }
+}
+
+def xfaDump(result) {
+    def final pdf = PDDocument.load(new File(result['doc']))
+    def final documentCatalog = pdf.getDocumentCatalog()
+    def final acroForm = documentCatalog.getAcroForm()
+
+    result["pdf-has-acroform"] = (null == acroForm) ? false : true
+    if (!result["pdf-has-acroform"]) {
+        return
+    }
+
+    // NOTE: "XFA forms can be created and used as PDF 1.5 - 1.7 files or as XDP
+    //       (XML Data Package). The format of an XFA resource in PDF
+    //       is described by the XML Data Package Specification."
+    //       https://www.adobe.com/content/dam/acom/en/devnet/acrobat/pdfs/PDF32000_2008.pdf
+    //
+    //       PDF may contain XFA in XDP format, but XFA may also contain PDF.
+    //
+    result["acroform-has-xfa"] = acroForm.hasXFA()
+    if (result["acroform-has-xfa"]) {
+        result["acroform-xfa-is-dynamic"] = acroForm.xfaIsDynamic()
+        def final xfa = acroForm.getXFA()
+        def final dom = xfa.getDocument().getDocumentElement()
+
+        // TODO: We have to sanitize/protect the embedded JavaScript source
+        //       from HTML/XML-enncoding-botchery ( '<' => '&lt;' )
+        //
+        def final xml = XmlUtil.serialize(dom)
+        def final xmlFileName = result['doc'] + '_xfa.xml'
+        def final xmlFile = new File(xmlFileName)
+        xmlFile << xml
+
+        result["acroform-xfa-dump"] = xmlFileName
     }
 }
