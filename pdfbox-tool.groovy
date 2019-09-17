@@ -28,7 +28,15 @@ try {
 
     result['session-timestamp'] = System.currentTimeMillis()
     result['session-args'] = args
-    result['doc'] = args[-1]
+
+    def final inputArgs = args.toList()
+    if (inputArgs.size() > 1) {
+        result['doc'] = inputArgs[-1]
+
+    } else {
+        inputArgs << '--help'
+        inputArgs << '-h'
+    }
 
     def final cli = new CliBuilder(usage: 'pdfbox-tool.groovy [options] <PDF file>')
     cli.h(longOpt: 'help', 'Display help.')
@@ -37,7 +45,7 @@ try {
     cli.f(longOpt: 'form-info', 'Check if the PDF file contains a form, and list the form information.')
     cli._(longOpt: 'xfa-dump', 'If the PDF file contains a XFA, extract and write it into XFA xml file.')
 
-    def final options = cli.parse(args[0..-2])
+    def final options = cli.parse(inputArgs[0..-2])
 
     if (options.h) {
         cli.usage()
