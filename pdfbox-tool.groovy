@@ -22,12 +22,14 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import groovy.xml.XmlUtil
 
-def final result = [:]
+def final result = [
+    'session': [
+        'input-args': args,
+        'timestamp': System.currentTimeMillis()
+    ]
+]
 
 try {
-
-    result['session-timestamp'] = System.currentTimeMillis()
-    result['session-args'] = args
 
     def final inputArgs = args.toList()
     if (inputArgs.size() > 1) {
@@ -212,7 +214,7 @@ def xfaDump(result) {
         //       from HTML/XML-enncoding-botchery ( '<' => '&lt;' )
         //
         def final xml = XmlUtil.serialize(dom)
-        def final xmlFileName = result['doc'] + '_xfa.xml'
+        def final xmlFileName = "${result['doc']}_xfa-${result['session']['timestamp']}.xml"
         def final xmlFile = new File(xmlFileName)
         xmlFile << xml
 
