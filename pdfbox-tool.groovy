@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-@Grab('org.apache.pdfbox:pdfbox:2.0.15')
+@Grab('org.apache.pdfbox:pdfbox:2.0.17')
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
 import org.apache.pdfbox.text.PDFTextStripper

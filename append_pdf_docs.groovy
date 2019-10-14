@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-@Grab('org.apache.pdfbox:pdfbox:2.0.15')
+@Grab('org.apache.pdfbox:pdfbox:2.0.17')
 
 import java.io.File
 import java.io.IOException
