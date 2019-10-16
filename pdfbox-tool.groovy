@@ -10,6 +10,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentCatalog
 import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm
 import org.apache.pdfbox.pdmodel.interactive.form.PDField
 import org.apache.pdfbox.pdmodel.interactive.form.PDNonTerminalField
+import org.apache.pdfbox.util.Version
 
 import java.io.File
 import java.io.IOException
@@ -25,7 +26,8 @@ import groovy.xml.XmlUtil
 def final result = [
     'session': [
         'input-args': args,
-        'timestamp': System.currentTimeMillis()
+        'timestamp': System.currentTimeMillis(),
+        'pdfbox-version': Version.getVersion()
     ]
 ]
 
